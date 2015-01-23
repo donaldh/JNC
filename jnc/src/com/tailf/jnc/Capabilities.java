@@ -1,6 +1,7 @@
 package com.tailf.jnc;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Capabilities {
 
@@ -308,14 +309,14 @@ public class Capabilities {
         return urlSchemes;
     }
 
-    private final ArrayList<Capa> capas;
-    private final ArrayList<Capa> data_capas;
+    private final ArrayList<Capability> capas;
+    private final ArrayList<Capability> data_capas;
 
-    static private class Capa {
-        String uri;
-        String revision;
+    static public class Capability {
+        public final String uri;
+        public final String revision;
 
-        Capa(String uri, String revision) {
+        Capability(String uri, String revision) {
             this.uri = uri;
             this.revision = revision;
         }
@@ -323,8 +324,8 @@ public class Capabilities {
 
     protected Capabilities(Element e) throws JNCException {
         final NodeSet caps = e.get("capability");
-        capas = new ArrayList<Capa>(caps.size());
-        data_capas = new ArrayList<Capa>(caps.size());
+        capas = new ArrayList<Capability>(caps.size());
+        data_capas = new ArrayList<Capability>(caps.size());
 
         for (int i = 0; i < caps.size(); i++) {
             final Element cap = caps.getElement(i);
@@ -345,7 +346,7 @@ public class Capabilities {
                     }
                 }
             }
-            capas.add(new Capa(uri, rev));
+            capas.add(new Capability(uri, rev));
             if (uri.equals(NETCONF_BASE_CAPABILITY)) {
                 baseCapability = true;
             } else if (uri.equals(WRITABLE_RUNNING_CAPABILITY)) {
@@ -402,14 +403,14 @@ public class Capabilities {
             } else {
                 // It's either a proper data schema capability or some
                 // homegrown agent capability
-                data_capas.add(new Capa(uri, rev));
+                data_capas.add(new Capability(uri, rev));
             }
         }
     }
 
     /** Checks all capabilities including the rfc 4711 ones */
     public boolean hasCapability(String uri) {
-        for (final Capa c : capas) {
+        for (final Capability c : capas) {
             if (c.uri.equals(uri)) {
                 return true;
             }
@@ -418,16 +419,22 @@ public class Capabilities {
     }
 
     /**
+     * Returns the set of capabilties
+     */
+    public List<Capability> getCapabilities() {
+        return capas;
+    }
+
+    /**
      * Returns the revision for a specific uri, return null if no revision
      * found. Only check the user data capabilities.
      */
     public String getRevision(String uri) {
-        for (Capa capa : data_capas) {
+        for (Capability capa : data_capas) {
             if (capa.uri.equals(uri)) {
                 return capa.revision;
             }
         }
         return null;
     }
-
 }
