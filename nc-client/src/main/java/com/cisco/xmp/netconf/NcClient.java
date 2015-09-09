@@ -17,6 +17,10 @@ import jline.console.completer.StringsCompleter;
 
 public class NcClient implements AutoCloseable {
 
+    public enum DataStore {
+        running, startup, candidate
+    }
+
     private static final String SESSION_NAME = "cfg";
     private Device device = null;
 
@@ -49,7 +53,7 @@ public class NcClient implements AutoCloseable {
     public void interactive() throws NcException, IOException {
         ConsoleReader reader = new ConsoleReader();
         Completer completer = new StringsCompleter("get", "get-config", "exit", "lock", "unlock", "commit",
-                "discard-changes");
+                "discard-changes", "running", "candidate", "startup");
         reader.addCompleter(completer);
 
         do {
@@ -76,6 +80,11 @@ public class NcClient implements AutoCloseable {
                     break;
                 case "discard-changes":
                     discardChanges();
+                    break;
+                case "running":
+                case "candidate":
+                case "startup":
+                    datastore = DataStore.valueOf(command);
                     break;
                 case "":
                     break;
@@ -117,10 +126,6 @@ public class NcClient implements AutoCloseable {
 
     public boolean isConnected() {
         return device != null;
-    }
-
-    public enum DataStore {
-        running, startup, candidate
     }
 
     public String getConfig() throws NcException {
