@@ -30,15 +30,18 @@ public class NcClient implements AutoCloseable {
 
     public static void main(String[] args) {
         if (args.length < 4) {
-            System.err.println("Usage is: NcClient <hostname> <port> <username> <password>");
+            System.err.println("Usage is: java -jar nc-client-N.N.N-executable.jar <hostname> <port> <username> <password> [command]");
             System.exit(1);
         }
 
         try (NcClient nc = new NcClient(args[0], args[1])) {
             nc.connect(args[2], args[3]);
-            nc.interactive();
-            // String config = nc.getConfig();
-            // System.out.println(config);
+
+            if (args.length > 4) {
+                nc.execute(args[4]);
+            } else {
+                nc.interactive();
+            }
         } catch (Throwable t) {
             System.err.println(t.toString());
             System.exit(1);
@@ -48,6 +51,42 @@ public class NcClient implements AutoCloseable {
     protected NcClient(String host, String port) {
         this.hostname = host;
         this.port = port;
+    }
+
+    public void execute(String command) throws NcException {
+        switch (command) {
+        case "get":
+            System.out.println(get());
+            System.out.println();
+            break;
+        case "get-config":
+            System.out.println(getConfig());
+            System.out.println();
+            break;
+        case "lock":
+            lock();
+            break;
+        case "unlock":
+            unlock();
+            break;
+        case "commit":
+            commit();
+            break;
+        case "discard-changes":
+            discardChanges();
+            break;
+        case "running":
+        case "candidate":
+        case "startup":
+            datastore = DataStore.valueOf(command);
+            break;
+        case "":
+            break;
+        case "exit":
+            System.exit(0);
+        default:
+            System.err.println("Ohnoes not a command: '" + command + "'");
+        }
     }
 
     public void interactive() throws NcException, IOException {
@@ -60,39 +99,7 @@ public class NcClient implements AutoCloseable {
             try {
                 String command = reader.readLine(hostname + "> ");
                 command = command.trim();
-                switch (command) {
-                case "get":
-                    System.out.println(get());
-                    System.out.println();
-                    break;
-                case "get-config":
-                    System.out.println(getConfig());
-                    System.out.println();
-                    break;
-                case "lock":
-                    lock();
-                    break;
-                case "unlock":
-                    unlock();
-                    break;
-                case "commit":
-                    commit();
-                    break;
-                case "discard-changes":
-                    discardChanges();
-                    break;
-                case "running":
-                case "candidate":
-                case "startup":
-                    datastore = DataStore.valueOf(command);
-                    break;
-                case "":
-                    break;
-                case "exit":
-                    System.exit(0);
-                default:
-                    System.err.println("Ohnoes not a command: '" + command + "'");
-                }
+                execute(command);
             } catch (Throwable t) {
                 System.err.println(t.toString());
             }
